@@ -1,6 +1,5 @@
 baseurl = "/"
-languageCode = "en-us"
-languageLang = "en"
+languageCode = "en"
 title = "Amit Adhikari"
 theme = "kiss"
 copyright = "&copy; <a href=\"https://github.com/adkri\">Amit Adhikari</a> 2018"
