@@ -11,7 +11,7 @@ enableRobotsTXT = true
 
 [params.sections_right]
 "/about" = "About"
-"/projects" = "Projects"
+# "/projects" = "Projects"
 
 [params.sections_left]
 "/" = "Posts"
@@ -40,8 +40,8 @@ page = "" # Twitter Page username. If not set, params.social.twitter will be use
 
 twitter = "amitadkri"
 github = "adkri"
-email = "end.adhikai@gmail.com"
-linkedin = "amitadhikari"
+email = "aadhikari@knox.edu"
+linkedin = "amit-adhikari"
 facebook = "end.adhikari"
 instagram = "amit_adk"
 codepen = ""
