@@ -2,6 +2,7 @@
 title = "About Me"
 date = "2018-07-31"
 menu = "main"
+draft = true
 +++
 
 Hugo is a static site engine written in Go.

@@ -3,7 +3,7 @@ languageCode = "en"
 title = "Amit Adhikari"
 theme = "kiss"
 copyright = "&copy; <a href=\"https://github.com/adkri\">Amit Adhikari</a> 2018"
-disqusShortname = "adkri"
+disqusShortname = "cryps-co"
 googleAnalytics = ""
 # Number of posts per page
 Paginate = 5
@@ -23,8 +23,8 @@ customCSS = ["css/custom.css"]
 [params.info]
 adsense = "" # Adsense ID (ID only, without ca-pub-)
 enableSocial = true # Adds OpenGraph and Twitter cards
-homeTitle = "" # Title for home page
-poweredby = true # Adds powered by hugo and kiss below Copyright
+homeTitle = "Amit Adhikari" # Title for home page
+poweredby = false # Adds powered by hugo and kiss below Copyright
 related = true # Includes related articles at the bottom of the article
 
 
@@ -38,12 +38,12 @@ page = "" # Twitter Page username. If not set, params.social.twitter will be use
 
 [params.social]
 
-twitter = "amitadk"
+twitter = "amitadkri"
 github = "adkri"
 email = "end.adhikai@gmail.com"
 linkedin = "amitadhikari"
 facebook = "end.adhikari"
-instagram = "amitadk"
+instagram = "amit_adk"
 codepen = ""
 
 [params.matomoAnalytics]
