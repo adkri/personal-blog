@@ -2,29 +2,37 @@
 title = "About Me"
 date = "2018-07-31"
 menu = "main"
-draft = true
+draft = false
 +++
 
-Hugo is a static site engine written in Go.
+Hi there! I'm Amit. I am a software engineer.
 
-It makes use of a variety of open source projects including:
+<img style="float: left;margin-right:30px;" src="https://i.ibb.co/X8BKXWt/profile-zoom-2x.jpg" width="250">
+I like to develop, optimize and take care of complex backend systems.
 
-* [Cobra](https://github.com/spf13/cobra)
-* [Viper](https://github.com/spf13/viper)
-* [J Walter Weatherman](https://github.com/spf13/jWalterWeatherman)
-* [Cast](https://github.com/spf13/cast)
+I often love to deep dive into systems programming, tackling away at abstractions to know what I'm working with and leverage systems from the bottom up.
 
-Learn more and contribute on [GitHub](https://github.com/spf13).
 
-## Setup
+I go to a small town liberal arts college around the midwest. 
 
-Some fun facts about [Hugo](http://gohugo.io/):
+<br /><br />
+Resume: https://drive.google.com/file/d/1tS5GDNizTuY62yz28GKPBCGzsaZWc0PC/view?usp=sharing
 
-* Built in [Go](http://golang.org/)
-* Loosely inspired by [Jekyll](http://jekyllrb.com/)
-* Primarily developed by [spf13](http://spf13.com/) on the train while commuting to and from Manhattan.
-* Coded in [Vim](http://vim.org) using [spf13-vim](http://vim.spf13.com/)
+<br/><br />
+Things I like:
 
-Have questions or suggestions? Feel free to [open an issue on GitHub](https://github.com/spf13/hugo/issues/new) or [ask me on Twitter](https://twitter.com/spf13).
+* Programming :)
+* Learning new stuff
+
+Yes, not exactly a complete list. :sweat_smile:
+
+
+
+## Yearly Stuff
+
+* 2019 Summer   - Incoming Intern at Facebook
+* 2018 Summer   - Interned at Oracle
+* 2017 Fall     - Joined college.
+
 
 Thanks for reading!
