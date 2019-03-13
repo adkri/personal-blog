@@ -3,7 +3,7 @@ languageCode = "en"
 title = "Amit Adhikari"
 theme = "kiss"
 copyright = "&copy; <a href=\"https://github.com/adkri\">Amit Adhikari</a> 2018"
-disqusShortname = "cryps-co"
+disqusShortname = "adhikari-me"
 googleAnalytics = ""
 # Number of posts per page
 Paginate = 5
