@@ -7,19 +7,41 @@ tags: ["c"]
 
 
 
-In this post we will discuss writing a LRU Cache in C. 
+In this post we will discuss the process of creating a Least Recently Used(LRU) cache structure in C. The Least Recently Used policy is very common model to create caching structures in computers.
 
-LRU or Least-Recently-Used is a cache eviction policy. More at [wikipedia](https://en.wikipedia.org/wiki/Cache_replacement_policies#Least_recently_used_(LRU)).
+The [LRU cache eviction policy](https://en.wikipedia.org/wiki/Cache_replacement_policies#Least_recently_used_(LRU)) is as simple as it sounds. It describes the eviction strategy of data in a cache, in this case, if the cache requires to evict data it will evict the least recently used item.
 
-A cache is a simple store with get and put operations.
+Why and when would we need such a structure?
 
-To get a lru cache with constant time for both get and put, we will be using the standard HashTable and DoublyLinkedList approach.
+#### Cache
 
+First of all, let us define a cache. In computer science, a cache(pronounced "cash") is simply a local data store we use to reduce data retrival time. While this concept might seem very simple, it is equally important in all levels of abstraction in a computer. 
 
+For example, in the computer hardware level we can store terabytes of information in a hard drive. However, the speed of the hard drive is slow and cannot compare to the operations a cpu can do within the same timeframe, so we put the running application on the RAM. Now, the cpu can work with data in the RAM instead of the hard drive. In this case, we can say the RAM is a "cache" for the hard drive.
 
-We use the HashTable for constant time get and put. The reason we use a doubly linkedlist is so that we can put the least recently used at the end and easily remove them. If we access a entry than we need to move that to the top.
+Even in the software level, we have different caches. A cache to store the result of heavy computation, result of network calls, or data retrieved from the database.
 
-First we define our structures:
+By the nature of caching, we can see infer that it exists because we have finite memory at every level of abstraction we work on. Then we know that if we build a cache we should work on the assumption of limited memory available to us. Thus, we have the need for a cache eviction policy. Here, we define eviction as the removal of entries from the cache after it cannot store any more elements.
+
+There are various different cache eviction strategies like First In First Out (FIFO), Least Recently Used (LRU), Most Frequently Used(MFU), or Random. Each one would be appropriate depending on requirements of the system.
+
+#### Datastructure
+
+For our LRU cache, let us define the interface for it and then the internal design specifications that is required.
+
+The cache itself should be very simple, supporting only the basic operations: **get** and **put**.
+
+```c
+// Interface for the cache
+void* get(char* key);
+void put(char* key, void* value);
+```
+
+Since the requirement from cache arises to make a current system faster, the time complexity should not be anything else than constant.
+
+We see the cache interface resembles most closely to a hashtable structure found in most of computer science. So our implementation will include a hashtable with slight modifications. With a hashtable we have a basic cache, the ability to store and retrieve data. But to implement our eviction strategy, we need to remember the items that are being read and the items which are not being used. To perform such operations we implement a hashtable with a doubly linked list structure. The linked structure allows us to store data and move them around freely. This enables us to say, keep all the least used items at the tail of the list, while moving the used items to the front of the list. Then, we use hashtable to quickly jump around and get items from the list. Both of the operations can now be performed in constant time.
+
+Implementation of the LRU Cache:
 
 ```c
 typedef struct Node {
