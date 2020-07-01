@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal blog of Amit Adhikari">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <link rel="alternate icon" href="/favicon.png">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <title>Writing a Custom Database in Python</title>
+</head>
+<body><header id="banner">
+    <h2><a href="/">Amit Adhikari</a></h2>
+    <nav>
+        <ul>
+            <li><a href="/">posts</a></li>
+            
+            <li>
+                <a href="/about/">About Me</a>
+            </li>
+            
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Writing a Custom Database in Python</h1><time>August 1, 2018</time></header><p>In this post, we&rsquo;ll be discussing about writing our own custom database in Python.</p>
+<p>Our database will be quite simple and we will be using LevelDB as our storage engine. LevelDB is a really fast key-value store developed at Google. This is the actual engine that does storing of our data, and it supports the common get, put, delete and iterate operations, and it does it super fast. And our code is going to make a wrapper around this and provide functionality we want incorporated.</p>
+<p>To start, we need this library called &ldquo;<a href="https://plyvel.readthedocs.io/en/latest/installation.html">Plyvel</a>&rdquo;. This is our python interface to the leveldb core  written in C++.</p>
+<pre><code>&gt;&gt;&gt; import plyvel
+&gt;&gt;&gt; db = plyvel.DB('/tmp/testdb/', create_if_missing=True)`
+</code></pre><p>And to store data:</p>
+<pre><code>&gt;&gt;&gt; db.put(bytes(&quot;name&quot;), bytes(&quot;goku&quot;))
+&gt;&gt;&gt; db.put(bytes(&quot;age&quot;), bytes(&quot;40&quot;))
+</code></pre><p>And to retrieve data:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="o">&gt;&gt;&gt;</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="s2">&#34;name&#34;</span><span class="p">))</span>
+<span class="n">cryps</span>
+</code></pre></div><p>You can also go through all the data:</p>
+<pre><code>&gt;&gt;&gt; for key, value in db:
+...     print key + &quot; : &quot; + value
+</code></pre><p>And our result:</p>
+<div class="highlight"><pre class="chroma"><code class="language-markdown" data-lang="markdown">  name : goku 
+  age  : 40 
+</code></pre></div><p>You will notice I&rsquo;m using &lsquo;bytes()&rsquo; here because the keys and values have to be in byte characters.</p>
+<p>You can read the whole documentation <a href="https://plyvel.readthedocs.io/en/latest/user.html">here</a>.</p>
+<p><strong>Working with our DB:</strong>
+So we see that we can store and retrieve stuff. But what can we actually do with just key and value pairs?</p>
+<p>Storing data will be a little different than what we are used to with other databases. So let&rsquo;s suppose we want to store data for books in our database.</p>
+<p>We have the book <strong>isbn number</strong>, <strong>title</strong>, <strong>author</strong> and <strong>genre</strong>.</p>
+<p>You can store this data any way you want but I&rsquo;m just going to show one way of doing things.</p>
+<p>I want my application to mainly center around genre of books so, my key would be structured like:</p>
+<p><strong>book:genre:book_id:title</strong>
+<strong>book:genre:book_id:author</strong></p>
+<p>So for each I&rsquo;d structure the keys string in this format.</p>
+<p>Eg.</p>
+<pre><code>db.put(b'book:fantasy:9788580410631:title', b'Name of the Wind')
+
+db.put(b'book:fantasy:9788580410631:author', b'Patrick Rothfuss')
+</code></pre><p>Now if I want to get all the books of one genre from the database:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">getByGenre</span><span class="p">(</span><span class="n">genre</span><span class="p">):</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;book:&#39;</span><span class="o">+</span><span class="n">genre</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">iterator</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="nb">bytes</span><span class="p">(</span><span class="n">prefix</span><span class="p">)):</span>
+        <span class="k">print</span> <span class="n">value</span>
+</code></pre></div><p>We can then call:</p>
+<pre><code>&gt;&gt;&gt; getByGenre('fantasy')
+</code></pre><p>And we get this result:</p>
+<div class="highlight"><pre class="chroma"><code class="language-markdown" data-lang="markdown">  Name of The Wind
+  Patrick Rothfuss
+</code></pre></div><p>We can do more stuff here:</p>
+<div class="highlight"><pre class="chroma"><code class="language-python" data-lang="python">
+<span class="k">def</span> <span class="nf">getByGenre</span><span class="p">(</span><span class="n">genre</span><span class="p">):</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;book:&#39;</span> <span class="o">+</span> <span class="n">genre</span>
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">iterator</span><span class="p">()</span> <span class="k">as</span> <span class="n">it</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s1">&#39;Name: &#39;</span><span class="p">,</span> <span class="n">v</span>
+            <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="o">=</span> <span class="n">it</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="k">print</span> <span class="s1">&#39;Author: &#39;</span><span class="p">,</span> <span class="n">v</span>
+            
+</code></pre></div><p>This is a very basic example, but basically you can customize this to your requirements. LevelDB is very fast so you can do complex operations, and it will work good for even million of data.</p>
+</article>
+
+        </main><footer id="footer">
+    <div>
+
+
+        <a href="https://github.com/adkri">github</a>
+        |
+        <a href="https://twitter.com/amitadkri">twitter</a>
+        |
+        <a href="/index.xml">rss</a>
+    </div>
+    
+</footer>
+</body>
+</html>

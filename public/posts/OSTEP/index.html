@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal blog of Amit Adhikari">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <link rel="alternate icon" href="/favicon.png">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <title>Notes on Operating System: Three Easy Pieces</title>
+</head>
+<body><header id="banner">
+    <h2><a href="/">Amit Adhikari</a></h2>
+    <nav>
+        <ul>
+            <li><a href="/">posts</a></li>
+            
+            <li>
+                <a href="/about/">About Me</a>
+            </li>
+            
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Notes on Operating System: Three Easy Pieces</h1><time>January 27, 2019</time></header><h1 id="cpu-virtualization">CPU Virtualization</h1>
+<h2 id="processes">Processes</h2>
+<p>a process is a running program</p>
+<p>the os virtualizes the cpu</p>
+<p>by running one program, then stopping it and running another, the os promotes the illusion that many cpu&rsquo;s exist</p>
+<p>this basic technique is called time sharing of the CPU, allows users to run as many concurrent processes as they like</p>
+<p>to implement virtualuzation of the cpu, os needs:</p>
+<p>low-level machinery - mechanisms eg. time-sharing</p>
+<p>high-level intelligence - policies eg. scheduling policy</p>
+<p>what is the machine state of a process? it is what a program can read or update when it is running.</p>
+<p>one  component is memory, instructions lie in memory; data the process reads  and writes also in memory. the memory the process can address is its  address space</p>
+<p>another are registers, many instructions read or update registers and thus important for execution</p>
+<p>some particularly special registers form machine state</p>
+<p>the  program counter(PC) or sometimes called the instruction pointer(IP)  tells us which instruction of program is currently executed.</p>
+<p>stack pointer and frame pointer are used to manage the stack for function parameters, local variables and return addresses</p>
+<p>programs often access persistent storage devices too. such IO information might include a list of files the process has open</p>
+<h2 id="process-api">Process API</h2>
+<p>what must be included in any interface of an modern operating system</p>
+<ul>
+<li>create: os must include some method to create new processes</li>
+<li>destroy: as there is interface to for process creation, also should be interface to destroy processes forcefully</li>
+<li>wait: sometimes it is useful to wait for a process to stop running</li>
+<li>misc control: other than killing or waiting, we need suspend and resume</li>
+<li>status: there are usually interfaces to get some status information about a process, how long it has run for, or what state it is in</li>
+</ul>
+<p>Process Creation</p>
+<p>how does a process get created from a program</p>
+<p>the first thing a os must do is load its code and any static data into memory</p>
+<p>programs initially reside on disk in some kind of executable format, thus, the process of loading a program and static data to memory requires the os to read those bytes from disk and place them into memory</p>
+<p>in early os, the loading process is done eagerly, all at once before running the program; modern os perform the process lazily, by loading pieces of code or data as they are needed during execution</p>
+<p>once the code and static data are loaded, few other things</p>
+<p>some memory must be allocated for the program&rsquo;s run-time stack</p>
+<p>c programs use the stack for local variables, function parameters and return addresses; the os allocates this memory and gives it to the process</p>
+<p>os will initialize the stack with arguments; it will fill in the parameters to main i.e. argc and the argv array</p>
+<p>os may also allocate memory for heap</p>
+<p>in c programs heap is used for dynamically allocated data</p>
+<p>request space by malloc() and free by free()</p>
+<p>the heap is needed for data structures like lists, hash table, trees</p>
+<p>the heap is small at first, as program runs heap grows</p>
+<p>the os will also do some other init tasks, related to io</p>
+<p>for example in unix, each process by default has three file descriptors, for standard input, output, error</p>
+<ul>
+<li>
+<p>by loading the code and static data into memory</p>
+</li>
+<li>
+<p>by creating and initializing a stack</p>
+</li>
+<li>
+<p>by doing other work for io setup</p>
+</li>
+</ul>
+<p>the os finally has set the stage for program execution</p>
+<p>now last task to start the program running at entry point, main()</p>
+<p>by jumping to main() routine, the os transfers control of the cpu to the newly created process, and program begins execution\</p>
+<p>Process States</p>
+<p>a process can be in one of three states:</p>
+<ul>
+<li>running: process is running on a processor. it is executing instructions</li>
+<li>ready: process is ready to run but for some reason the os has chosen not to run it at this moment</li>
+<li>blocked: process has performed some kind of operation that makes it not ready. when process initiates an IO request to a disk, it becomes blocked and thus some other process can use the processor</li>
+</ul>
+<p>a process can be moved between the ready and running states</p>
+<p>once a process has been blocked the os keeps it in that stage until some event occurs; at that point the process moves to the ready state again</p>
+<p>after it gets to ready state from blocked, it has to wait for os to switch from another running process to this one</p>
+<p>the decisions is make by the <strong>os scheduler</strong></p>
+<p>Data Structures</p>
+<p>the os is a program and it has some key data structures that track various info</p>
+<p>to track the state of each processes the os will keep a <strong>process list/task list</strong></p>
+<p>the os must also track blocked processes, when IO event completes and os should make sure to wake the correct process and ready it to run again</p>
+<p>the <strong>register context</strong> will hold the contents of registers for a stopped process</p>
+<p>when a process is stopped its registers will be saved to memory location; by restoring these registers the os can resume running the process</p>
+<p>sometimes a process will have other states:</p>
+<ul>
+<li>initial, when it is created</li>
+<li>final, when it has exited but not yet cleaned up; also called zombie state; usually programs in unix return 0 when they accomplished task successfully, and non-zero otherwise</li>
+<li>when finished parent will make one final call, wait() to wait for the completion of the child, also indicate to os that it can clean up</li>
+</ul>
+<p>each entry in process list is sometime found in a <strong>process control block</strong> that is a structure that contains info about a specific process</p>
+<h2 id="process-api-1">Process API</h2>
+<p>process creation in UNIX systems</p>
+<p>UNIX presents one of the most intriguing way to create a new process with a pair of systems calls: <em>fork()</em> and <em>exec()</em></p>
+<p>a third routine <em>wait()</em> can be used by a process wishing to wait for a process it has created to complete</p>
+<h3 id="the-fork-system-call">The fork() system call</h3>
+<p>the fork() is used to create a new process;</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span><span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span><span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello world (pid:%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+    <span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">rc</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// fork failed; exit
+</span><span class="c1"></span>        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&#34;fork failed</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// child/ new process
+</span><span class="c1"></span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello, i am child (pid:%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello, i am parent of %d (pid:%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">rc</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>when this program is first started running, the process prints its <strong>process identifier(PID)</strong></p>
+<p>now the interesting part, the process calls the fork() system call, the process that is created is an exact copy of the calling process. the newly started process doesn&rsquo;t start running at main(); it just comes to life as if it had called fork() itself</p>
+<p>the child isn&rsquo;t an exact copy. specifically, it now has its own copy of the address space, its own registers, its own PC, and the value it returns to the caller of fork() is different.</p>
+<p>the parent receives the PID of the new process</p>
+<p>the child receives a return code of 0</p>
+<p>this differentiation is useful, and it is easier to handle the two different cases</p>
+<p>the output of the program is not deterministic. when the child process is created ; there are now two active processes in the system</p>
+<p>we cannot tell which of them will run first</p>
+<h3 id="the-wait-system-call">the wait() system call</h3>
+<p>sometimes it is quite useful for a parent to wait for a child process to finish what is had been doing</p>
+<p>this task is accomplished by the wait() system call/or its more complete sibling waitpid()</p>
+<p>if we call wait() from parent, the system call won&rsquo;t return until the child had run and exited</p>
+<p>thus even when the parent has run first, it politely waits for child to finish waiting</p>
+<h3 id="the-exec-system-call">the exec() system call</h3>
+<p>a final and important piece of process creation api is the exec() system call</p>
+<p>this system call is important when you want to run a program different than the calling program</p>
+<p>on linux, there are six variants of exec():</p>
+<ul>
+<li>execl</li>
+<li>execlp</li>
+<li>execle</li>
+<li>execv</li>
+<li>execvp</li>
+<li>execvpe</li>
+</ul>
+<p>read man pages to learn more</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span> <span class="cpf">&lt;sys/wait.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+	<span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello world (pid:%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+	<span class="kt">int</span> <span class="n">rc</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// fork failed; exit
+</span><span class="c1"></span>		<span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&#34;fork failed</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+		<span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// child (new process)
+</span><span class="c1"></span>		<span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello, I am child (pid:%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+		<span class="kt">char</span> <span class="o">*</span><span class="n">myargs</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+		<span class="n">myargs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">strdup</span><span class="p">(</span><span class="s">&#34;wc&#34;</span><span class="p">);</span>
+        <span class="c1">// program: &#34;wc&#34; (word count)
+</span><span class="c1"></span>        <span class="n">myargs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">strdup</span><span class="p">(</span><span class="s">&#34;p3.c&#34;</span><span class="p">);</span> <span class="c1">// argument: file to count
+</span><span class="c1"></span>        <span class="n">myargs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="c1">// marks end of array
+</span><span class="c1"></span>        <span class="n">execvp</span><span class="p">(</span><span class="n">myargs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">myargs</span><span class="p">);</span> <span class="c1">// runs word count
+</span><span class="c1"></span>        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;this shouldn’t print out&#34;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// parent goes down this path (main)
+</span><span class="c1"></span>        <span class="kt">int</span> <span class="n">rc_wait</span> <span class="o">=</span> <span class="n">wait</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&#34;hello, I am parent of %d (rc_wait:%d) (pid:%d)</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span>
+        <span class="n">rc</span><span class="p">,</span> <span class="n">rc_wait</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">getpid</span><span class="p">());</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div><p>the fork() system call is strange; its partner in crime exec() is not so normal</p>
+<p>what it does:</p>
+<p>given the name of an executable and some arguments, it loads code and static data from that executable and overwrites its current code segment and current static data with it; the heap and the stack and other parts of memory space are reinitialized. then os simply runs that program, passing in any arguments as the argv of that process</p>
+<p>it does not create a new process; rather it transforms the currently running process into a different running program</p>
+<p>after the exec() in the child; it is almost as if the previous process never ran; a successful call to exec() never returns</p>
+<h3 id="why-motivating-the-api">Why? Motivating the API</h3>
+<p>one big question is why would we build such an odd interface</p>
+<p>the separation of fork() and exec() is essential in building a UNIX shell, because it lets the shell run code after the call to fork() but <em>before</em> the call to exec(); this code can alter the environment of the about-to-be-run program, and thus enables a variety of interesting features to be built</p>
+<p>the shell is just a user program ; it shows a <strong>prompt</strong> and then waits for a command. in most shells it figures out where in the file system the executable resides, calls fork() to create a new child process to run the command, calls some variant of the exec() to run the command; then waits for command to complete by wait(). when wait() returns, it prints out a prompt again, ready for next command</p>
+<p>the separation of fork() and exec() allows the shell to more useful things:</p>
+<p>prompt &gt; wc p3.c  &gt;  newfile.txt</p>
+<p>this above example, the output of the program is redirected into the output file. the way the shell accomplishes this task is quite simple:</p>
+<p>when the child is created, before calling exec() ; the shell closes standard output and opens the file newfile.txt; by doing so any output from new process wc are sent to the file instead of the screen</p>
+<p>the reason this redirection works is due to an assumption about how the os manages file descriptors</p>
+<p>specifically UNIX systems start looking for free file descriptors at zero. in this case, STDOUT_FILENO will be the first available one and thus get assigned when open() is called. subsequent writes by the child process to the standard output file descriptor, for example by printf() will then be routed transparently to the newly-opened file instead of screen</p>
+<div class="highlight"><pre class="chroma"><code class="language-cassandra" data-lang="cassandra"><span class="nb">int</span><span class="w"> </span><span class="n">main</span><span class="p">(</span><span class="nb">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">    </span><span class="nb">int</span><span class="w"> </span><span class="n">rc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fork</span><span class="p">();</span><span class="w">
+</span><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="c1">// fork failed; exit
+</span><span class="c1"></span><span class="w">        </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;fork failed\n&#34;</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="n">exit</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="n">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mf">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// child: redirect standard output to a file
+</span><span class="c1"></span><span class="w">        </span><span class="n">close</span><span class="p">(</span><span class="n">STDOUT_FILENO</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="n">open</span><span class="p">(</span><span class="s">&#34;./p4.output&#34;</span><span class="p">,</span><span class="w"> </span><span class="n">O_CREAT</span><span class="o">|</span><span class="n">O_WRONLY</span><span class="o">|</span><span class="n">O_TRUNC</span><span class="p">,</span><span class="w"> </span><span class="n">S_IRWXU</span><span class="p">);</span><span class="w">
+</span><span class="w">        
+</span><span class="w">        </span><span class="c1">// now exec &#34;wc&#34;...
+</span><span class="c1"></span><span class="w">        </span><span class="n">char</span><span class="w"> </span><span class="o">*</span><span class="n">myargs</span><span class="p">[</span><span class="mf">3</span><span class="p">];</span><span class="w">
+</span><span class="w">        </span><span class="n">myargs</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strdup</span><span class="p">(</span><span class="s">&#34;wc&#34;</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="n">myargs</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">strdup</span><span class="p">(</span><span class="s">&#34;p4.c&#34;</span><span class="p">);</span><span class="w">
+</span><span class="w">        </span><span class="n">myargs</span><span class="p">[</span><span class="mf">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">NULL</span><span class="p">;</span><span class="w">
+</span><span class="w">        </span><span class="n">execvp</span><span class="p">(</span><span class="n">myargs</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="n">myargs</span><span class="p">);</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="n">else</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span><span class="w">        </span><span class="c1">// parent
+</span><span class="c1"></span><span class="w">        </span><span class="nb">int</span><span class="w"> </span><span class="n">rc_wait</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">wait</span><span class="p">(</span><span class="kc">NULL</span><span class="p">);</span><span class="w">
+</span><span class="w">    </span><span class="p">}</span><span class="w">
+</span><span class="w">	</span><span class="n">return</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span><span class="w">
+</span><span class="w"></span><span class="p">}</span><span class="w">
+</span></code></pre></div><p>UNIX pipes are implemented in a similar way, but with pipe() system call</p>
+<p>in this case, the output of one process is connected  to an inkernel pipe (i.e. queue) and the input of another process is connected to that same pipe; thus, the output of one process seamlessly is used as input to the next</p>
+<p>long and useful chains of commands can be strung together</p>
+<p>as a simple example consider looking for a word in a file, and then counting how many times said word occurs; with pipes and the utilities grep and wc</p>
+<p>grep -o foo file | wc -l</p>
+<p>fork()/exec() combination is powerful way to create and manipulate processes</p>
+<p>Note: read the man pages for whatever shell you are using</p>
+<h3 id="process-control-and-users">Process Control and Users</h3>
+<p>beyond fork(), exec() and wait(), there are a lot of other interfaces for interacting with processes in UNIX systems</p>
+<p>for example, kill() system call is used to send signals to a process, including directives to pause, die and other useful imperatives</p>
+<p>in most UNIX shells, certain keystroke combinations are configured to deliever a specific signal to the currently running process;</p>
+<p>control-c sends a SIGINT(interrupt) to the process/terminating it</p>
+<p>control-z sends a SIGTSTP(stop) signal thus pausing it in mid-execution; can resume it later with builtin <em>fg</em> command</p>
+<p>the entire signals subsystem provides a rich infrastructure to deliever external events to processes, including ways to receive and process those signals within individual processes, and ways to send signals to individual processes as well as entire <strong>process groups</strong></p>
+<p>to use this form of communication, a process should use the signal() system call to catch() various signals; it ensures that when a particular signal is delievered to a process; it will suspend its normal execution and run a particular piece of code in response to signal</p>
+<p>who sends signal to a process, and who cannot?</p>
+<p>the systems we use have multiple people using them at the same time, if one of these people can arbitrarily send signals such as SIGINT, the usability and security of the system will be compromised</p>
+<p>as a result, modern systems have strong conception of <strong>user</strong></p>
+<p>the user after entering a password to establish credentials, logs in to gain access to system resources; the user may then launch one or many processes and exercise full control over them</p>
+<p>users can generally only control their own processes; it is job of the os to parcel out resources to each user to meet overall system goals</p>
+<h3 id="useful-tools">Useful Tools</h3>
+<p>the <em>ps</em> command allows you to see which processes are running</p>
+<p>the <em>top</em> command displays the processes of the system and how much CPU and other resources it is eating up</p>
+<p>the command <em>kill</em> can be used to send signals to processes</p>
+<ul>
+<li>each process has a name; that name is a number knowns PID</li>
+<li>fork() system call is used in UNIX to create a new process; the creator the parent and newly created process the child</li>
+<li>the wait() system call allows a parent to wait for its child to complete execution</li>
+<li>the exec() family of system calls allows a child to break free from its similarity to its parent and execute a new program</li>
+<li>a UNIX shell commonly uses these 3 calls to launch user commands; the separation of fork and exec enables features like input/output redirection, pipes, and other cool features</li>
+<li>process control is available in form of signals, which can cause jobs to stop, continue or even terminate</li>
+<li>which processes can be controlled by a person is encapsulated in notion of user</li>
+<li>a superuser can control all processes</li>
+</ul>
+<h2 id="direct-execution">Direct Execution</h2>
+<p>in order to virtualize the CPU, the os needs to share the physical CPU among many jobs running seemingly at the same time</p>
+<p>the basic idea is simple: run one process for a little while, then run another one</p>
+<p>by <strong>time sharing</strong> the CPU, virtualization is achieved</p>
+<p>there are a few challenges</p>
+<ul>
+<li>performance</li>
+<li>control</li>
+</ul>
+<p>the basic idea is Limited Direct Execution</p>
+<p>direct execution -&gt; run program directly on the CPU</p>
+<h3 id="problem-1-restricted-operations">Problem 1: Restricted Operations</h3>
+<p>this is simple but has some problems. how does os stop it? how does it perform restricted operations?</p>
+<p>the approach is a new processor mode, <strong>user mode</strong></p>
+<p>code in user mode is restricted in what it can do;can&rsquo;t IO</p>
+<p>then os runs in <strong>kernel mode</strong>, code can do what it likes</p>
+<p>so for process to do privileged operation, user programs perform <strong>system call</strong></p>
+<p>to execute a system call, program execute <strong>trap</strong> instruction</p>
+<p>trap jumps into kernel; does IO operation</p>
+<p>os calls <strong>return-from-trap</strong> instruction; back to user mode</p>
+<p>the kernel sets up a <strong>trap table</strong> at boot time</p>
+<p>sets up the hardware for what code to run when events occur</p>
+<p>example, disk interrupt, keyboard interrupt, program makes system call</p>
+<p>tells hardware where the trap handler code is</p>
+<p>to specify syscall, a system-call number is assigned</p>
+<p>the user code is thus responsible for placing the desired system-call number in register</p>
+<p>the trap handler examines the number, executes corresponding code</p>
+<p>two phases to the limited direct execution protocol</p>
+<ul>
+<li>at boot, kernel initializes trap table</li>
+<li>when running process, kernel sets up things before return-from-trap</li>
+</ul>
+<h3 id="problem-2-switching-between-processes">Problem 2: Switching Between Processes</h3>
+<p>a cooperative approach:wait for system calls</p>
+<p>in this style the os trusts processes to behave</p>
+<p>most processes transfer control to os by syscalls, to open file, create process</p>
+<p>or when they do something illegal</p>
+<p>a non-cooperative approach: the os takes control</p>
+<p>a timer interrupt: runs every so many millis</p>
+<p>when interrupt raised process halts, interrupt handler in os runs</p>
+<p>now os has control of cpu</p>
+<h3 id="saving-and--restoring-context">Saving and  Restoring Context</h3>
+<p>after the timer interrupt, <strong>scheduler</strong> decides to keep running or make switch to another process</p>
+<p>if to switch, the os does <strong>context switch</strong></p>
+<p>in a context switch, os saves a few register values for current process and restore the registers for soon-to-execute process</p>
+<p>the registers are saved to kernel stack</p>
+<ul>
+<li>The CPU should support at least two modes of execution: a re-
+stricted user mode and a privileged (non-restricted) kernel mode.</li>
+<li>Typical user applications run in user mode, and use a system call
+to trap into the kernel to request operating system services.</li>
+<li>The trap instruction saves register state carefully, changes the hard-ware status to kernel mode, and jumps into the OS to a pre-specified destination: the trap table.</li>
+<li>When the OS finishes servicing a system call, it returns to the user
+program via another special return-from-trap instruction, which re-duces privilege and returns control to the instruction after the trap that jumped into the OS.</li>
+<li>The trap tables must be set up by the OS at boot time, and make
+sure that they cannot be readily modified by user programs. All
+of this is part of the limited direct execution protocol which runs
+programs efficiently but without loss of OS control.</li>
+<li>Once a program is running, the OS must use hardware mechanisms to ensure the user program does not run forever, namely the timer interrupt. This approach is a non-cooperative approach to CPU scheduling.</li>
+<li>Sometimes the OS, during a timer interrupt or system call, might
+wish to switch from running the current process to a different one,
+a low-level technique known as a context switch.</li>
+</ul>
+<h1 id="memory-virtualization">Memory Virtualization</h1>
+<h2 id="address-spaces">Address Spaces</h2>
+<p>it is the running program&rsquo;s view of memory in the system</p>
+<p>the address space of a process contains all of the memory state of the running program</p>
+<p>the code, stack and heap are in the address space</p>
+<p>the program code lives at top of the address space at 0; the heap at top after the code; and the stack at the bottom. this allows the stack and heap to grow</p>
+<p>the address space is an abstraction that the os provides to running program</p>
+<p>the program shouldn&rsquo;t be aware of this virtualization</p>
+<p>goals:</p>
+<ul>
+<li>transparency: it behaves as it has its own private physical memory</li>
+<li>efficiency: time and space</li>
+<li>protection: protect processes from one another and itself. isolation of address space</li>
+</ul>
+<h2 id="memory-api">Memory API</h2>
+<p>stack memory - allocations and deallocations are managed implicitly by the compiler or programmer; automatic memory</p>
+<p>heap memory - allocations and deallocations are explicitly handled by the programmer</p>
+<h2 id="address-translation">Address Translation</h2>
+<p>technique used - hardware-based address translation</p>
+<p>the hardware translates each memory access(eg., an instruction fetch, load, or store) changing the virtual address provided by instruction to a physical address</p>
+<h3 id="dynamic-relocation">Dynamic Relocation</h3>
+<p>base and bounds/dynamic resolution</p>
+<p>we need two hardware registers - base register and bounds/limit register</p>
+<p>when os decides where in physical memory program is located, sets base register to that value</p>
+<p>now any memory reference is translated by the processor</p>
+<p>physical address = virtual address + base</p>
+<p>each reference generated by process is a virtual address</p>
+<p>the hardware adds base register to this address and get physical address</p>
+<p>**address translation: ** transforming a virtual address into physical address</p>
+<p>this relocation of address happens at runtime, and we can move address spaces even after process has started running, referred as <strong>dynamic resolution</strong></p>
+<p>the processor will first check if memory reference is within bounds to make sure it is legal</p>
+<p>the base and bounds are hardware structures kept on the chip</p>
+<p>this part of processor is <strong>memory management unit(MMU)</strong></p>
+<p>in one way the bounds register holds the size of address space; another way it holds the <em>physical address</em> of the end of memory space</p>
+<h3 id="hardware-support">Hardware Support</h3>
+<p>the os runs in kernel mode, access to entire machine</p>
+<p>applications run in user mode, limited</p>
+<p>a single bit, stored in some kind of <strong>processor status word</strong>, indicates which mode the CPU is running in</p>
+<p>the hardware also provides the base and bounds registers, part of the MMU of cpu</p>
+<p>the hardware should provide special instructions to modify the base and bounds registers, allow os to change them when processes run; this is privileged</p>
+<p>the cpu must be able to generate exception when program tries to access memory illegally</p>
+<p>the os out-of-bounds handler runs, decides how to handle, usually terminate the process</p>
+<p>when os decides to stop running process, it must save values of   base and bounds registers to memory, in some per-process structure such as <strong>process structure</strong> or <strong>process control block</strong></p>
+<p>similarly, when os resumes a process, it must set values of base and bounds to correct values</p>
+<p>if address space moves location, update the base register</p>
+<p>os also must provide exception handlers</p>
+<h2 id="segmentation">Segmentation</h2>
+<p>with base and bounds, there is big chunk of &ldquo;free&rdquo; space in the middle of stack and heap</p>
+<p>instead of having one base and bounds pair in our MMU, have a  base and bound pair per logical segment of the address space</p>
+<p>three base and bounds register pairs for code, heap and stack</p>
+<p><strong>external fragmentation</strong> when physical memory has lots of holes of free memory</p>
+<h2 id="free-space-management">Free Space Management</h2>
+<p>the generic data structure used to manage free space in the heap is some kind of <strong>free list</strong></p>
+<p>this structure contains references to all free chunks of space in the managed region of memory</p>
+<h2 id="paging">Paging</h2>
+<p>chop up space into fixed-sized pieces - <strong>paging</strong></p>
+<p>instead of splitting up a process&rsquo;s address space into some number of variable-sized logical segments called <strong>page</strong></p>
+<p>we view physical memory as array of fixed-sized slots called <strong>page frames</strong></p>
+<p>each frame contains a single virtual-memory page</p>
+<p>example, when os wishes to place our tiny 64byte address into eight-page memory, it finds four free pages; perhaps it keeps a free list of all free pages for this and grabs the first free pages off the list</p>
+<p>to record where each virtual page of the address space is placed in memory, os keeps a per-process data structure known as a <strong>page table</strong></p>
+<p>the major role of page table is to store <strong>address translations</strong> for each of virtual pages of address space</p>
+<h3 id="where-are-page-tables-stored">where are page tables stored?</h3>
+<p>page tables can get large</p>
+<p>we store page tables in memory</p>
+<h2 id="paging-faster-translations">Paging: Faster Translations</h2>
+<p>going to memory for every instruction is slow</p>
+<p>we can use <strong>translation-lookaside buffer</strong></p>
+<p>it is a part of the chip&rsquo;s MMU; simply a hardware cache of popular virtual-to-physical address translation. also called an <strong>address-translation cache</strong></p>
+<p>for each virtual memory reference, first check TLB</p>
+<h2 id="paging-smaller-tables">Paging: Smaller Tables</h2>
+<p>problem: page tables are too big and consume too much memory</p>
+<p>we usually have a page table for every process in the system</p>
+<p>simpler solution: bigger pages</p>
+<p>Problem will be big wastes within each page; internal fragmentation</p>
+<p>hybrid approach: paging and segments</p>
+<p>we use base/bounds to hold the physical address of the page table/end of the page table</p>
+<p>problem here is it causes external fragmentation</p>
+<h3 id="multi-level-page-tables">Multi-level Page Tables</h3>
+<p>first chop up the page table into page-sized chunks;</p>
+<p>to track validity of page of a page table; use <strong>page directory</strong></p>
+<h3 id="swapping-the-page-tables-to-disk">Swapping the page tables to disk</h3>
+<p>if it gets too big for kernel virtual memory it goes into swap</p>
+<h2 id="swapping-mechanisms">Swapping Mechanisms</h2>
+<p>we require additional level in memory hierarchy</p>
+<h3 id="swap-space">Swap Space</h3>
+<p>the first thing we need is reserve some space on disk for moving pages back and forth - <strong>swap space</strong></p>
+<p>the os will need to remember the <strong>disk address</strong> of a given page</p>
+<p>The page fault - if page is not present page-fault handler; it is implemented in the hardware</p>
+<p>if page is not present and has been swapped to disk, os will need to swap the page into memory inorder to service the page fault</p>
+<h2 id="the-linux-virtual-memory-system">The Linux Virtual Memory System</h2>
+<h3 id="the-linux-address-space">The Linux Address Space</h3>
+<h1 id="concurrency">Concurrency</h1>
+<p>a new abstraction for a single running program: <strong>thread</strong></p>
+<p>a **multi-threaded ** program has more than one point of execution; each thread is like a separate process <em>except</em> they share the same address space</p>
+<p>state of single thread has a program counter(PC); has its own private set of registers it uses; switching from one thread to another will need a <strong>context switch</strong></p>
+<p>the context switch is similar as between processes</p>
+<p>with processes, we need process control block(PCB); now with threads we need thread control blocks(TCBs) to store the state of each thread of a process</p>
+<p>major difference is that the address space remains the same</p>
+<p>also with multi-threaded process, each thread runs independently and instead of single stack we have one stack per thread</p>
+</article>
+
+        </main><footer id="footer">
+    <div>
+
+
+        <a href="https://github.com/adkri">github</a>
+        |
+        <a href="https://twitter.com/amitadkri">twitter</a>
+        |
+        <a href="/index.xml">rss</a>
+    </div>
+    
+</footer>
+</body>
+</html>

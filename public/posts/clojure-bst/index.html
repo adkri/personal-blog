@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal blog of Amit Adhikari">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <link rel="alternate icon" href="/favicon.png">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <title>Binary Search Tree in Clojure</title>
+</head>
+<body><header id="banner">
+    <h2><a href="/">Amit Adhikari</a></h2>
+    <nav>
+        <ul>
+            <li><a href="/">posts</a></li>
+            
+            <li>
+                <a href="/about/">About Me</a>
+            </li>
+            
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Binary Search Tree in Clojure</h1><time>November 4, 2018</time></header><p>Structure of the BST</p>
+<div class="highlight"><pre class="chroma"><code class="language-clojure" data-lang="clojure"><span class="nv">Empty</span> <span class="nv">tree</span> <span class="nb">- </span><span class="nv">nil</span>
+<span class="nv">Single</span> <span class="nb">node - </span><span class="p">[</span><span class="mi">5</span> <span class="nv">nil</span> <span class="nv">nil</span><span class="p">]</span>
+<span class="nv">Three</span> <span class="nv">nodes</span> <span class="nb">- </span><span class="p">[</span><span class="mi">5</span> <span class="p">[</span><span class="mi">3</span> <span class="nv">nil</span> <span class="nv">nil</span><span class="p">]</span> <span class="p">[</span><span class="mi">7</span> <span class="nv">nil</span> <span class="nv">nil</span><span class="p">]]</span>
+</code></pre></div><p>Insert into BST:</p>
+<div class="highlight"><pre class="chroma"><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">defn </span><span class="nv">insert</span> <span class="p">[</span><span class="nv">tree</span> <span class="o">&amp;</span> <span class="nv">values</span><span class="p">]</span>
+  <span class="p">(</span><span class="nf">cond</span>
+    <span class="p">(</span><span class="nf">empty?</span> <span class="nv">values</span><span class="p">)</span> <span class="nv">tree</span>
+    <span class="p">(</span><span class="nb">nil? </span><span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">apply </span><span class="nv">insert</span> <span class="p">[(</span><span class="nb">first </span><span class="nv">values</span><span class="p">)</span> <span class="nv">nil</span> <span class="nv">nil</span><span class="p">]</span> <span class="p">(</span><span class="nb">rest </span><span class="nv">values</span><span class="p">))</span> 
+    <span class="p">(</span><span class="nb">&lt; </span><span class="p">(</span><span class="nb">first </span><span class="nv">values</span><span class="p">)</span> <span class="p">(</span><span class="nb">first </span><span class="nv">tree</span><span class="p">))</span>
+        <span class="p">(</span><span class="nb">apply </span><span class="nv">insert</span> <span class="p">[(</span><span class="nb">first </span><span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nf">insert</span> <span class="p">(</span><span class="nb">second </span><span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">first </span><span class="nv">values</span><span class="p">))</span> <span class="p">(</span><span class="nb">last </span><span class="nv">tree</span><span class="p">)]</span> <span class="p">(</span><span class="nb">rest </span><span class="nv">values</span><span class="p">))</span>
+    <span class="ss">:else</span> <span class="p">(</span><span class="nb">apply </span><span class="nv">insert</span> <span class="p">[(</span><span class="nb">first </span><span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">second </span><span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nf">insert</span> <span class="p">(</span><span class="nb">last </span><span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">first </span><span class="nv">values</span><span class="p">))]</span> <span class="p">(</span><span class="nb">rest </span><span class="nv">values</span><span class="p">))</span>
+  <span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div><p>Depth of a BST:</p>
+<div class="highlight"><pre class="chroma"><code class="language-clojure" data-lang="clojure"><span class="p">(</span><span class="kd">defn </span><span class="nv">depth</span> <span class="p">[</span><span class="nv">tree</span><span class="p">]</span>
+  <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">nil? </span><span class="nv">tree</span><span class="p">)</span> <span class="mi">0</span>
+  <span class="p">(</span><span class="nb">inc </span><span class="p">(</span><span class="nb">apply max </span><span class="p">(</span><span class="nb">map </span><span class="nv">depth</span> <span class="nv">tree</span><span class="p">))))</span>
+<span class="p">)</span> 
+</code></pre></div></article>
+
+        </main><footer id="footer">
+    <div>
+
+
+        <a href="https://github.com/adkri">github</a>
+        |
+        <a href="https://twitter.com/amitadkri">twitter</a>
+        |
+        <a href="/index.xml">rss</a>
+    </div>
+    
+</footer>
+</body>
+</html>

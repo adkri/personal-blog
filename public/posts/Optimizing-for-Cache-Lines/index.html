@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal blog of Amit Adhikari">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <link rel="alternate icon" href="/favicon.png">
+    
+    <link rel="stylesheet" href="/css/style.min.css">
+
+    <title>Optimizing for Cache Lines</title>
+</head>
+<body><header id="banner">
+    <h2><a href="/">Amit Adhikari</a></h2>
+    <nav>
+        <ul>
+            <li><a href="/">posts</a></li>
+            
+            <li>
+                <a href="/about/">About Me</a>
+            </li>
+            
+        </ul>
+    </nav>
+</header>
+<main id="content">
+<article>
+    <header id="post-header">
+        <h1>Optimizing for Cache Lines</h1><time>April 5, 2020</time></header><p>In this post, we will see how we can write code optimized for cpu cache lines. If this topic is new to you, this post should be a good introduction. I do not dive into much details but will exaplain with some examples.</p>
+<p>So recently I have been learning about designing data systems, and the first things I learned about were data structures. In these articles the common theme was designing structures while thinking about how they were going to be accessed, and in all of them I heard about cache lines.
+Even though I took a data structures class and systems class, I seem to have missed the part about cache lines.</p>
+<p>However, before we start talking about them let&rsquo;s start with a simple example.</p>
+<p>I have an <strong>2d integer array</strong> of say 100,000,000 elements (10000 rows x 10000 cols).</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="kt">int</span> <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>	
+<span class="kt">int</span> <span class="n">n_cols</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+
+<span class="kt">int</span><span class="o">**</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">**</span><span class="p">)(</span><span class="n">malloc</span><span class="p">(</span><span class="n">n_rows</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)));</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)(</span><span class="n">malloc</span><span class="p">(</span><span class="n">n_cols</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+</code></pre></div><p>We have two ways we can iterate over them:</p>
+<ol>
+<li>Iterate each row and then iterate over columns</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"> <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_cols</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+</code></pre></div><ol start="2">
+<li>Iterate each column and then iterate over rows</li>
+</ol>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_cols</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+
+</code></pre></div><p>Although the difference might look miminal, the second one took 4x more time than the first one on my machine.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">1. iteration took 0.320760 seconds
+2. iteration took 1.440252 seconds
+</code></pre></div><p>I will provide the code I used at the bottom of this article.</p>
+<p>So why does it make such a big difference? Well it all goes back to how the cpu works.</p>
+<p>First let us look at the memory hierarchy from the CPU, and their speeds.</p>
+<div class="highlight"><pre class="chroma"><code class="language-md" data-lang="md">| Memory Type   | Access Time   | 
+| ------------- |:-------------:|
+| Registers     | 1ns           |
+| L1 Cache      | 1ns           |
+| L2 Cache      | 4ns           | 
+| L3 Cache      | 10ns          |
+| Ram Access    | 100ns         |
+| SSD read      | 16000ns       |
+| HDD read      | 4000000ns     |
+| CA-Netherlands| 150,000,000ns |
+</code></pre></div><p>So we see that the furthur up the data is stored, the faster the CPU can read it.
+The computer caches data to L1, L2 and L3 so it does not have to make the trip to the RAM to get data.</p>
+<p>When we load bytes if it is not present in the cache, the computer will bring those memory from the lower memory to higher up in the hierarchy. Usually the memory modules can tranfer 8 bytes of memory at a time.
+The L1, L2, L3 have the memory organized in cachelines which are typically 32-64 bytes in size.
+And the memory modules brings bytes to fill these cachelines.</p>
+<p>So when we write programs, we want them to have sequential access pattern. This is leads to &lsquo;spatial locality&rsquo;. Spacial locality means that if we are reading a piece of memory, then the next piece of memory we read is also already in the cacheline.</p>
+<p>For example, if we are working with arrays of integers,</p>
+<p>Integers are usually 4 bytes.
+If we assume the cacheline to be 32-bytes, then we can have 8 integers of the array at the same time in the cacheline. This is possible because arrays use sequential blocks of memory.
+So if we accessing it linearly we only have to update the cacheline after every 8th element.</p>
+<pre><code>Array -&gt; [ 10, 20 , 30, 40 , 50 , 60 , 70 , 80 , 90, 100, 110, 120, 130 ]
+</code></pre><p>Then when we access the first element, the computer actually brings the whole 32 bytes to the cacheline.</p>
+<pre><code>32 byte CacheLine -&gt; [10, 20, 30, 40, 50, 60, 70, 80]
+</code></pre><p>Then for the next 7 accesses of the array, the CPU just looks at cacheline, and the reads are very fast.
+Then on the 9th access, we have a cache miss, so then the processor needs to go down on the memory hierarchy, possibly to main memory to get the next cachelines.</p>
+<pre><code>32 byte CacheLine -&gt; [90, 100, 110, 120, 130, ...]
+</code></pre><p>This takes around ~90ns, compared to ~1ns when it was in the cacheline. But then successive accesses are also fast.</p>
+<p>So going back to our 2d array example above, why is it slow? Well in the array, each row was a contiguous block of memory, but different rows are in different places in memory. And if we jumo access different locations in memory, everytime it will invalidate the cachelines.</p>
+<p>Memory Access for 1)</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">Row 1: <span class="m">1</span> -&gt; <span class="m">2</span> -&gt; <span class="m">3</span> -&gt; <span class="m">4</span> -&gt; ... -&gt; <span class="m">10000</span>
+Row 2: <span class="m">1</span> -&gt; <span class="m">2</span> -&gt; <span class="m">3</span> -&gt; <span class="m">4</span> -&gt; ... -&gt; <span class="m">10000</span>
+...
+Row 10000: <span class="m">1</span> -&gt; <span class="m">2</span> -&gt; <span class="m">3</span> -&gt; <span class="m">4</span> -&gt; ... -&gt; <span class="m">10000</span>
+
+</code></pre></div><p>Memory Access for 2)</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">Row 1: <span class="m">1</span> -&gt;  Row 2: <span class="m">1</span> -&gt; ...... -&gt; Row 10000: <span class="m">1</span>
+Row 1: <span class="m">2</span> -&gt;  Row 2: <span class="m">2</span> -&gt; ...... -&gt; Row 10000: <span class="m">2</span>
+...
+Row 1: <span class="m">10000</span> -&gt;  Row 2: <span class="m">10000</span> -&gt; ...... -&gt; Row 10000: <span class="m">10000</span>
+</code></pre></div><p>The first one is optimized as it uses the cachelines, where on the second method, it updates the cacheline but then on the next read, it has to update cacheline again for second row. So it never really utilizes the cachelines.</p>
+<p>So in conclusion, when writing systems where memory access times are very important, think about how to structure your data structures to possibly fit on the cachelines, and algorithms to use sequential access.</p>
+<p>Thank you for reading.</p>
+<div class="highlight"><pre class="chroma"><code class="language-c" data-lang="c"><span class="cp">#include</span><span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span><span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span><span class="cp">#include</span><span class="cpf">&lt;sys/time.h&gt;</span><span class="cp">
+</span><span class="cp"></span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">n_cols</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+
+    <span class="kt">int</span><span class="o">**</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">**</span><span class="p">)(</span><span class="n">malloc</span><span class="p">(</span><span class="n">n_rows</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)));</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="o">*</span><span class="p">)(</span><span class="n">malloc</span><span class="p">(</span><span class="n">n_cols</span> <span class="o">*</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">;</span>
+
+    <span class="n">gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">start</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_cols</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+    <span class="n">gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">end</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="kt">double</span> <span class="n">secs</span> <span class="o">=</span> <span class="p">(</span><span class="kt">double</span><span class="p">)(</span><span class="n">end</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">-</span> <span class="n">start</span><span class="p">.</span><span class="n">tv_usec</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000000</span> <span class="o">+</span> <span class="p">(</span><span class="kt">double</span><span class="p">)(</span><span class="n">end</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">-</span> <span class="n">start</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">);</span> 
+    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;iteration took %f seconds</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">secs</span><span class="p">);</span>
+
+    <span class="n">gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">start</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n_cols</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_rows</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">j</span><span class="p">;</span>
+    <span class="n">gettimeofday</span><span class="p">(</span><span class="o">&amp;</span><span class="n">end</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="n">secs</span> <span class="o">=</span> <span class="p">(</span><span class="kt">double</span><span class="p">)(</span><span class="n">end</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">-</span> <span class="n">start</span><span class="p">.</span><span class="n">tv_usec</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000000</span> <span class="o">+</span> <span class="p">(</span><span class="kt">double</span><span class="p">)(</span><span class="n">end</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">-</span> <span class="n">start</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">);</span> 
+    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;iteration took %f seconds</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">secs</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+</code></pre></div><h4 id="references">References:</h4>
+<p><a href="https://colin-scott.github.io/personal_website/research/interactive_latency.html">https://colin-scott.github.io/personal_website/research/interactive_latency.html</a>
+<a href="https://stackoverflow.com/questions/3928995/how-do-cache-lines-work">https://stackoverflow.com/questions/3928995/how-do-cache-lines-work</a>
+<a href="https://en.wikipedia.org/wiki/CPU_cache#CACHE-LINES">https://en.wikipedia.org/wiki/CPU_cache#CACHE-LINES</a>
+<a href="http://daslab.seas.harvard.edu/classes/cs265/index.html#faq">http://daslab.seas.harvard.edu/classes/cs265/index.html#faq</a>
+<a href="https://people.orie.cornell.edu/bdg79/ORIE6125/lecture8.html">https://people.orie.cornell.edu/bdg79/ORIE6125/lecture8.html</a></p>
+</article>
+
+        </main><footer id="footer">
+    <div>
+
+
+        <a href="https://github.com/adkri">github</a>
+        |
+        <a href="https://twitter.com/amitadkri">twitter</a>
+        |
+        <a href="/index.xml">rss</a>
+    </div>
+    
+</footer>
+</body>
+</html>

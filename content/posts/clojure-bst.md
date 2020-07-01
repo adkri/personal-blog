@@ -1,7 +1,7 @@
 ---
 title: "Binary Search Tree in Clojure"
 date: 2018-11-04T16:04:56-04:00
-draft: false
+draft: true
 tags: ["clojure"]
 menu:
   main:
