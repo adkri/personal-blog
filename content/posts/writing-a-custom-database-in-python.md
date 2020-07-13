@@ -1,7 +1,7 @@
 ---
 title: "Writing a Custom Database in Python"
 date: 2018-08-01T16:04:56-04:00
-draft: false
+draft: true
 tags: ["python"]
 menu:
   main:

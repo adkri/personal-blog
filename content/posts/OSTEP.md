@@ -1,7 +1,7 @@
 ---
 title: "Notes on Operating System: Three Easy Pieces"
 date: 2019-01-27T16:04:56-04:00
-draft: false
+draft: true
 
 tags: ["books", "operating system"]
 ---
