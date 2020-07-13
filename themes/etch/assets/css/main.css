@@ -71,6 +71,7 @@ main#content a:hover {
 main#content p {
     color: #394548;
     margin: 16px 0;
+    word-wrap: break-word;
 }
 
 main#content h1,
