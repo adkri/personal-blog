@@ -1,15 +1,26 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>python on Amit Adhikari</title>
+    <title>python on Amit Adhikari λ=</title>
     <link>/tags/python/</link>
-    <description>Recent content in python on Amit Adhikari</description>
+    <description>Recent content in python on Amit Adhikari λ=</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <copyright>&amp;copy; &lt;a href=&#34;https://github.com/adkri&#34;&gt;Amit Adhikari&lt;/a&gt; 2020</copyright>
     <lastBuildDate>Wed, 01 Aug 2018 16:04:56 -0400</lastBuildDate>
     
 	<atom:link href="/tags/python/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    
+    <item>
+      <title>Nature of Software</title>
+      <link>/posts/nature-of-software/</link>
+      <pubDate>Mon, 02 Nov 2020 00:00:00 -0600</pubDate>
+      
+      <guid>/posts/nature-of-software/</guid>
+      <description>One thing that a lot of software engineers</description>
+    </item>
     
     
     
@@ -50,6 +61,19 @@ this basic technique is called time sharing of the CPU, allows users to run as m
 to implement virtualuzation of the cpu, os needs:
 low-level machinery - mechanisms eg. time-sharing
 high-level intelligence - policies eg.</description>
+    </item>
+    
+    
+    
+    <item>
+      <title>Binary Search Tree in Clojure</title>
+      <link>/posts/clojure-bst/</link>
+      <pubDate>Sun, 04 Nov 2018 16:04:56 -0400</pubDate>
+      
+      <guid>/posts/clojure-bst/</guid>
+      <description>Structure of the BST
+Empty tree - nil Single node - [5 nil nil] Three nodes - [5 [3 nil nil] [7 nil nil]] Insert into BST:
+(defn insert [tree &amp;amp; values] (cond (empty? values) tree (nil? tree) (apply insert [(first values) nil nil] (rest values)) (&amp;lt; (first values) (first tree)) (apply insert [(first tree) (insert (second tree) (first values)) (last tree)] (rest values)) :else (apply insert [(first tree) (second tree) (insert (last tree) (first values))] (rest values)) ) ) Depth of a BST:</description>
     </item>
     
     

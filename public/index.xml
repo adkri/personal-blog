@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Amit Adhikari</title>
+    <title>Amit Adhikari λ=</title>
     <link>/</link>
-    <description>Recent content on Amit Adhikari</description>
+    <description>Recent content on Amit Adhikari λ=</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <copyright>&amp;copy; &lt;a href=&#34;https://github.com/adkri&#34;&gt;Amit Adhikari&lt;/a&gt; 2020</copyright>
@@ -33,35 +33,6 @@ So recently I have been learning about designing data systems, and the first thi
       <guid>/posts/writing-lru-cache-in-c/</guid>
       <description>In this post we will discuss the process of creating a Least Recently Used(LRU) cache structure in C. The Least Recently Used policy is very common model to create caching structures in computers.
 The LRU cache eviction policy is as simple as it sounds. It describes the eviction strategy of data in a cache, in this case, if the cache requires to evict data it will evict the least recently used item.</description>
-    </item>
-    
-    
-    
-    <item>
-      <title>Notes on Operating System: Three Easy Pieces</title>
-      <link>/posts/OSTEP/</link>
-      <pubDate>Sun, 27 Jan 2019 16:04:56 -0400</pubDate>
-      
-      <guid>/posts/OSTEP/</guid>
-      <description>CPU Virtualization Processes a process is a running program
-the os virtualizes the cpu
-by running one program, then stopping it and running another, the os promotes the illusion that many cpu&amp;rsquo;s exist
-this basic technique is called time sharing of the CPU, allows users to run as many concurrent processes as they like
-to implement virtualuzation of the cpu, os needs:
-low-level machinery - mechanisms eg. time-sharing
-high-level intelligence - policies eg.</description>
-    </item>
-    
-    
-    
-    <item>
-      <title>Writing a Custom Database in Python</title>
-      <link>/posts/writing-a-custom-database-in-python/</link>
-      <pubDate>Wed, 01 Aug 2018 16:04:56 -0400</pubDate>
-      
-      <guid>/posts/writing-a-custom-database-in-python/</guid>
-      <description>In this post, we&amp;rsquo;ll be discussing about writing our own custom database in Python.
-Our database will be quite simple and we will be using LevelDB as our storage engine. LevelDB is a really fast key-value store developed at Google. This is the actual engine that does storing of our data, and it supports the common get, put, delete and iterate operations, and it does it super fast. And our code is going to make a wrapper around this and provide functionality we want incorporated.</description>
     </item>
     
     
