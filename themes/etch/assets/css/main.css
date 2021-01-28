@@ -7,9 +7,8 @@ html {
 }
 
 body {
-    font-size: 16px;
     font-size: 1.6rem;
-    font-family: 'Lato', 'Helvetica Neue', 'Arial', sans-serif;
+    font-family: 'Lato', 'Helvetica Neue', sans-serif;
     color: #313a3d;
     width: 100%;
     margin: 0 auto;
@@ -68,11 +67,16 @@ main#content a:hover {
     text-decoration: underline;
 }
 
-main#content p {
+main#content p, 
+main#content ul, 
+main#content ol {
     color: #394548;
     margin: 16px 0;
     word-wrap: break-word;
+    font-size: 2.2rem;
+    font-family:  'Crimson Text', 'Georgia', serif;
 }
+
 
 main#content h1,
 main#content h2,
@@ -101,8 +105,8 @@ main#content h3 {
 /* index.html styles */
 main#content ul#posts {
     list-style-type: none;
-    font-size: 16px;
-    font-size: 1.6rem;
+    font-size: 22px;
+    font-size: 2.2rem;
     margin-top: 0;
     padding: 0;
 }
@@ -118,9 +122,6 @@ main#content ul#posts small {
     margin-left: 10px;
 }
 
-main#content ul#posts li a {
-    text-decoration: none;
-}
 
 main#content ul#posts li a:hover {
     /* color: #369aff; */

@@ -1,8 +1,8 @@
 baseurl = "/"
 languageCode = "en"
-title = "Amit Adhikari λ="
+title = "Amit Adhikari"
 theme = "etch"
-copyright = "&copy; <a href=\"https://github.com/adkri\">Amit Adhikari</a> 2020"
+copyright = "&copy; <a href=\"https://github.com/adkri\">Amit Adhikari</a> 2021"
 disqusShortname = "adhikari-me"
 googleAnalytics = ""
 # Number of posts per page
