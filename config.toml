@@ -21,7 +21,7 @@ pygmentsCodeFences = true
   highlight = true
 
 [params.sections_right]
-"/about" = "About"
+# "/about" = "About"
 # "/projects" = "Projects"
 
 [params.sections_left]
