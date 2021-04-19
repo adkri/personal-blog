@@ -59,7 +59,8 @@ header#banner nav ul li a {
 
 main#content a {
     /* color: #007dfa; */
-    color: #e77470;
+    /* color: #e77470; */
+    color: #398cf7;
     text-decoration: none;
 }
 
@@ -125,7 +126,8 @@ main#content ul#posts small {
 
 main#content ul#posts li a:hover {
     /* color: #369aff; */
-    color: #de676b;
+    /* color: #de676b; */
+    color: #106fe8;
 }
 
 main#content ul#posts li a:hover small {
@@ -268,6 +270,6 @@ footer#footer {
 }
 
 footer#footer a {
-     color: #e77470;
+     color: #106fe8;
     text-decoration: none;
 }
